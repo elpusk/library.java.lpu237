@@ -16,16 +16,6 @@
         android:textColor="#FFFFFF"
         android:textSize="18sp" />
 
-    <!-- Clear Button -->
-    <Button
-        android:id="@+id/clearButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/headerTextView"
-        android:layout_marginTop="16dp"
-        android:text="Clear button"
-        android:layout_alignParentStart="true" />
-
     <!-- Test Set Button -->
     <Button
         android:id="@+id/testSetButton"
@@ -33,9 +23,32 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/headerTextView"
         android:layout_marginTop="16dp"
-        android:layout_toEndOf="@id/clearButton"
         android:layout_marginStart="16dp"
-        android:text="Test set button" />
+        android:text="Test set button"
+        android:layout_alignParentStart="true"
+        />
+
+    <!-- Open Button -->
+    <Button
+        android:id="@+id/openButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerTextView"
+        android:layout_marginTop="16dp"
+        android:layout_toEndOf="@id/testSetButton"
+        android:layout_marginStart="16dp"
+        android:text="Open device" />
+
+    <!-- close Button -->
+    <Button
+        android:id="@+id/closeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerTextView"
+        android:layout_marginTop="16dp"
+        android:layout_toEndOf="@id/openButton"
+        android:layout_marginStart="16dp"
+        android:text="Close device" />
 
     <!-- Run Button -->
     <Button
@@ -44,9 +57,20 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/headerTextView"
         android:layout_marginTop="16dp"
-        android:layout_toEndOf="@id/testSetButton"
+        android:layout_toEndOf="@id/closeButton"
         android:layout_marginStart="16dp"
-        android:text="Run button" />
+        android:text="Descryption data" />
+
+    <!-- Clear Button -->
+    <Button
+        android:id="@+id/clearButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerTextView"
+        android:layout_marginTop="16dp"
+        android:layout_toEndOf="@id/runButton"
+        android:layout_marginStart="16dp"
+        android:text="Clear button"/>
 
     <!-- EditText for multiline input with auto vertical scroll -->
     <EditText
@@ -61,7 +85,7 @@
         android:inputType="textMultiLine"
         android:scrollbars="vertical"
         android:scrollbarThumbVertical="@drawable/scrollbar_vertical"
-        android:hint="Enter test data here"
+        android:hint="Press Open and Swipe a card."
         />
 
     <!-- TextView for displaying result with auto vertical scroll -->

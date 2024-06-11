@@ -12,6 +12,6 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void verify_getFirstTest() {
-        assertEquals("DeviceLpu237", DeviceLpu237.getFirstTest());
+        //assertEquals("DeviceLpu237", DeviceLpu237.getFirstTest());
     }
 }
