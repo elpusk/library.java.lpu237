@@ -17,6 +17,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -43,7 +44,8 @@ interface ConstTest{
 
 public class MainActivity extends AppCompatActivity {
 
-
+    String[] m_s_ipek = ConstTest.CONST_TEST_IPEK;
+    private boolean m_b_canceled = false;
     private class CbMsrRead extends Lpu237Callback{
         public CbMsrRead(Lpu237Callback.TypeRx t){
             super(t);
@@ -108,21 +110,27 @@ public class MainActivity extends AppCompatActivity {
                     _send_broadercast_encrypted(sHex);
                 }
 
-                if(!ApiLpu237.getInstance().WaitMsrOriButtonWithCallback(m_curHandle,m_cb_read)){
-                    _send_broadercast("error : re-read");
+                if(!m_b_canceled) {
+                    if (!ApiLpu237.getInstance().WaitMsrOriButtonWithCallback(m_curHandle, m_cb_read)) {
+                        _send_broadercast("error : re-read");
+                    }
                 }
-
             }
             else if(Result.RESULT_ERROR == read_result){
                 _send_broadercast("error : read");
 
-                if(!ApiLpu237.getInstance().WaitMsrOriButtonWithCallback(m_curHandle,m_cb_read)){
-                    _send_broadercast("error : re-read");
+                if(!m_b_canceled) {
+                    if (!ApiLpu237.getInstance().WaitMsrOriButtonWithCallback(m_curHandle, m_cb_read)) {
+                        _send_broadercast("error : re-read");
+                    }
                 }
-
             }
             else{
 
+            }
+
+            if(m_b_canceled){
+                m_b_canceled = false;
             }
         }
     }
@@ -136,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
     final String STR_KEY_SET_TEXT_TO_RESULT = "SET_TEXT_TO_RESULT";
     final String STR_KEY_SET_ENTEXT_TO_RESULT = "SET_ENTEXT_TO_RESULT";
 
-    private EditText m_editTextInput;
+    private EditText m_editTextInput, m_editTextIpek;
     private Button m_buttonRun, m_buttonTestSet, m_buttonClear, m_buttonOpen, m_buttonClose;
     private TextView m_textViewResult, m_textViewHeader;
 
@@ -192,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
         m_buttonOpen = findViewById(R.id.openButton);
         m_buttonClose = findViewById(R.id.closeButton);
 
+        m_editTextIpek = findViewById(R.id.inputEditTextIpek);
         m_editTextInput = findViewById(R.id.inputEditText);
         m_textViewResult = findViewById(R.id.resultTextView);
 
@@ -271,7 +280,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(m_curHandle!= null ) {
+                    m_b_canceled = true;
                     ApiLpu237.getInstance().CancelWait(m_curHandle);
+
                     ApiLpu237.getInstance().EnableMsr(m_curHandle,false);
                     ApiLpu237.getInstance().Close(m_curHandle);
                 }
@@ -283,7 +294,32 @@ public class MainActivity extends AppCompatActivity {
         m_buttonRun.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // EditText에서 텍스트 가져오기
+                String sDeKey = m_editTextIpek.getText().toString();
+                if( sDeKey.isEmpty()){
+                    m_s_ipek = ConstTest.CONST_TEST_IPEK;
+                }
+                else{
+                    if( !sDeKey.matches("[0-9a-fA-F]+") ){
+                        //eror
+                        Toast.makeText(getApplicationContext(), "invalied Decryption key", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if(sDeKey.length()>32){
+                        sDeKey = sDeKey.substring(0,32);
+                    }
+                    else if (sDeKey.length() < 32) {
+                        // 길이가 32보다 작으면, 뒤에 '0'을 추가하여 길이를 32로 만듦
+                        StringBuilder sb = new StringBuilder(sDeKey);
+                        while (sb.length() < 32) {
+                            sb.append('0');
+                        }
+                        sDeKey = sb.toString();
+                    }
+                    m_s_ipek[0] = sDeKey;
+                }
+
+                m_editTextIpek.setText(m_s_ipek[0]);
+
                 String inputText = m_editTextInput.getText().toString();
 
                 m_textViewResult.setText("Please waiting calculating");
@@ -386,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
             if(!m_tag_value.is_parsable()) {
                 continue;
             }
-            String[] s_ipek = ConstTest.CONST_TEST_IPEK;
+            String[] s_ipek = m_s_ipek;
 
             byte[][] ipek = new byte [2][16];
             System.arraycopy(Tools.get_binary_from_hex_string(s_ipek[0]),0,ipek[0],0,ipek[0].length);
@@ -477,6 +513,7 @@ public class MainActivity extends AppCompatActivity {
         if(m_curHandle !=null && !m_curHandle.is_empty()){
             ApiLpu237.getInstance().CancelWait(m_curHandle);
             ApiLpu237.getInstance().Close(m_curHandle);
+            m_curHandle = null;
         }
         ApiLpu237.getInstance().Off();
         unregisterReceiver(myReceiver);

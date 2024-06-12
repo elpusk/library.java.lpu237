@@ -340,19 +340,28 @@ public class ApiLpu237 implements ApiInterface {
      */
     public boolean CancelWait(UsbDevHandle handle){
         boolean b_result = false;
-
+        Lpu237Runner msr = null;
         do{
             synchronized (m_lock_device_map){
                 if(!is_valied(handle)){
                     continue;
                 }
 
-                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                msr = m_map_lpu237.get(handle.get_path());
+                if(msr == null){
+                    continue;
+                }
                 if(!msr.is_open()){
                     continue;
                 }
 
                 b_result = msr.Cancel();
+            }
+
+            if(b_result){
+                if(msr != null) {
+                    while (msr.WhatIsDoing() != Lpu237Runner.Do.NOTHING) ;
+                }
             }
 
         }while(false);

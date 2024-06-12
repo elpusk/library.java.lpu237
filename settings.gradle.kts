@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "testlpu237"
 include(":app")
 include(":liblpu237")
+include(":test_liblpu237")

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#000000"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/id_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Console"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:padding="8dp"
+        android:gravity="center_horizontal" />
+
+    <EditText
+        android:id="@+id/id_main"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:hint=""
+        android:gravity="top|left"
+        android:inputType="textMultiLine"
+        android:scrollHorizontally="true"
+        android:overScrollMode="always"
+        android:layout_gravity="top"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical|horizontal" />
+</LinearLayout>

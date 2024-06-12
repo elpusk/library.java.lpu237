@@ -122,8 +122,11 @@ public abstract class HidDevice{
     }
 
     public void HidCancel(){
-        if(m_usbDeviceConnection!=null && m_usbInterface != null){
-            m_usbDeviceConnection.releaseInterface(m_usbInterface);
+        if(m_usbRequestIn != null){
+            m_usbRequestIn.cancel();
+        }
+        if(m_usbRequestOut != null){
+            m_usbRequestOut.cancel();
         }
     }
     protected int HidWrite(byte[] s_write )

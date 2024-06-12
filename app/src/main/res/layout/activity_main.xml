@@ -72,12 +72,24 @@
         android:layout_marginStart="16dp"
         android:text="Clear button"/>
 
+    <EditText
+        android:id="@+id/inputEditTextIpek"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/clearButton"
+        android:layout_marginTop="16dp"
+        android:background="#E0F7FA"
+        android:padding="10dp"
+        android:gravity="top|start"
+        android:hint="Input Decryption key(HEX) as like 6AC292FAA1315B4D858AB3A3D7D5933A "
+        />
+
     <!-- EditText for multiline input with auto vertical scroll -->
     <EditText
         android:id="@+id/inputEditText"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_below="@id/clearButton"
+        android:layout_below="@id/inputEditTextIpek"
         android:layout_marginTop="16dp"
         android:background="#E0F7FA"
         android:padding="10dp"
