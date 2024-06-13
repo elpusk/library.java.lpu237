@@ -48,6 +48,10 @@ public class ApiLpu237 implements ApiInterface {
     ////////////////////////////////////////////////////////////
 
     @Override
+    public String GetVersion(){
+        return "0.9.0.0";
+    }
+    @Override
     public boolean On(Application app) {
         boolean b_result = false;
 
@@ -861,6 +865,57 @@ public class ApiLpu237 implements ApiInterface {
                 }
 
                 msr.set_ibutton_remove(pTag);
+                b_result = true;
+            }
+        }while(false);
+        return b_result;
+
+    }
+
+    @Override
+    public Lpu237Tags ToolsMsrGetiButtonRTag(UsbDevHandle handle,boolean b_prefix){
+        Lpu237Tags tag = null;
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+                if(b_prefix) {
+                    tag = msr.get_ibutton_remove_tag_prefix();
+                }
+                else{
+                    tag = msr.get_ibutton_remove_tag_postfix();
+                }
+            }
+        }while(false);
+        return tag;
+
+    }
+
+    @Override
+    public boolean ToolsMsrSetiButtonRTag(UsbDevHandle handle,boolean b_prefix,Lpu237Tags pTag){
+        boolean b_result = false;
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+                if(b_prefix) {
+                    msr.set_ibutton_remove_tag_prefix( pTag);
+                }
+                else{
+                    msr.set_ibutton_remove_tag_postfix( pTag);
+                }
                 b_result = true;
             }
         }while(false);

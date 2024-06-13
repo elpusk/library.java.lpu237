@@ -157,16 +157,23 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                         else{
                             _run_callback(cb_gs, Lpu237Callback.Result.RESULT_ERROR, SetInfo);
                         }
-                    }while (!GetInfo.IsComplete());
+                    }while (!SetInfo.IsComplete());
                 }
 
                 if( obj instanceof Lpu237DoneCallback){
                     cb_done = (Lpu237DoneCallback) obj;
-                    if( this.df_apply() ){
-                        cb_done.Run(Lpu237Callback.Result.RESULT_SUCCESS,"Apply");
+                    if(!this.df_enter_config()){
+                        cb_done.Run(Lpu237Callback.Result.RESULT_ERROR,"EnterConfig");
                     }
-                    else{
-                        cb_done.Run(Lpu237Callback.Result.RESULT_ERROR,"Apply");
+                    else {
+                        if (!this.df_apply()) {
+                            this.df_leave_config();
+                            cb_done.Run(Lpu237Callback.Result.RESULT_ERROR, "Apply");
+                        }
+                        else {
+                            this.df_leave_config();
+                            cb_done.Run(Lpu237Callback.Result.RESULT_SUCCESS, "Apply");
+                        }
                     }
                 }
 
@@ -349,88 +356,88 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                 b_result = df_enter_config();
                 break;
             case Lpu237Setting.Step.BLANKS:
-                b_result = df_get_blanks();
+                b_result = df_set_blanks();
                 break;
             case Lpu237Setting.Step.ENABLE_TRACK1:
-                b_result = df_get_enable_tracK(0);
+                b_result = df_set_enable_tracK(0);
                 break;  //enable track1
             case Lpu237Setting.Step.ENABLE_TRACK2:
-                b_result = df_get_enable_tracK(1);
+                b_result = df_set_enable_tracK(1);
                 break;  //enable track2
             case Lpu237Setting.Step.ENABLE_TRACK3:
-                b_result = df_get_enable_tracK(2);
+                b_result = df_set_enable_tracK(2);
                 break;  //enable track3
             case Lpu237Setting.Step.INTERFACE:
-                b_result = df_get_interface();
+                b_result = df_set_interface();
                 break;
             case Lpu237Setting.Step.LANGUAGE_INDEX:
-                b_result = df_get_language_index();
+                b_result = df_set_language_index();
                 break;
             case Lpu237Setting.Step.BUZZER_FRQ:
-                b_result = df_get_buzzer_frequency();
+                b_result = df_set_buzzer_frequency();
                 break;
             case Lpu237Setting.Step.MSR_G_PREFIX:
-                b_result = df_get_global_prefix();
+                b_result = df_set_global_prefix();
                 break;
             case Lpu237Setting.Step.MSR_G_POSTFIX:
-                b_result = df_get_global_postfix();
+                b_result = df_set_global_postfix();
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_PREFIX1:
-                b_result = df_get_private_prefix(0);
+                b_result = df_set_private_prefix(0);
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_POSTFIX1:
-                b_result = df_get_private_postfix(0);
+                b_result = df_set_private_postfix(0);
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_PREFIX2:
-                b_result = df_get_private_prefix(1);
+                b_result = df_set_private_prefix(1);
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_POSTFIX2:
-                b_result = df_get_private_postfix(1);
+                b_result = df_set_private_postfix(1);
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_PREFIX3:
-                b_result = df_get_private_prefix(2);
+                b_result = df_set_private_prefix(2);
                 break;
             case Lpu237Setting.Step.MSR_PRIVATE_POSTFIX3:
-                b_result = df_get_private_postfix(2);
+                b_result = df_set_private_postfix(2);
                 break;
             case Lpu237Setting.Step.IB_TAG_PREFIX:
-                b_result = df_get_ibutton_tag_prefix();
+                b_result = df_set_ibutton_tag_prefix();
                 break;
             case Lpu237Setting.Step.IB_TAG_POSTFIX:
-                b_result = df_get_ibutton_tag_postfix();
+                b_result = df_set_ibutton_tag_postfix();
                 break;
             case Lpu237Setting.Step.IB_REMOVE:
                 if( Lpu237Tools.is_support_ibutton_remove(s_n,s_v) ){
-                    b_result = df_get_ibutton_remove();
+                    b_result = df_set_ibutton_remove();
                 }
                 break;
             case Lpu237Setting.Step.IB_RTAG_PREFIX:
                 if( Lpu237Tools.is_support_ibutton_remove(s_n,s_v) ){
-                    b_result = df_get_ibutton_remove_tag_prefix();
+                    b_result = df_set_ibutton_remove_tag_prefix();
                 }
                 break;
             case Lpu237Setting.Step.IB_RTAG_POSTFIX:
                 if( Lpu237Tools.is_support_ibutton_remove(s_n,s_v) ){
-                    b_result = df_get_ibutton_remove_tag_postfix();
+                    b_result = df_set_ibutton_remove_tag_postfix();
                 }
                 break;
             case Lpu237Setting.Step.UART_PREFIX:
-                b_result = df_get_uart_prefix();
+                b_result = df_set_uart_prefix();
                 break;
             case Lpu237Setting.Step.UART_POSTFIX:
-                b_result = df_get_uart_postfix();
+                b_result = df_set_uart_postfix();
                 break;
             case Lpu237Setting.Step.GLOBAL_SEND_CONDITION:
                 if( Lpu237Tools.is_support_msr_global_tag_send_condition(s_n,s_v) ) {
-                    b_result = df_get_global_send_condition();
+                    b_result = df_set_global_send_condition();
                 }
                 break;
             case Lpu237Setting.Step.READ_DIRECTION:
-                b_result = df_get_reading_direction();
+                b_result = df_set_reading_direction();
                 break;
             case Lpu237Setting.Step.TRACK_ORDER:
                 if( Lpu237Tools.is_support_msr_send_order(s_n,s_v) ) {
-                    b_result = df_get_track_order();
+                    b_result = df_set_track_order();
                 }
                 break;
             case Lpu237Setting.Step.LEAVE_CONFIG:

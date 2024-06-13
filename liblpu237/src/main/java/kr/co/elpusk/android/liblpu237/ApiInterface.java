@@ -15,6 +15,12 @@ import kr.co.elpusk.android.liblpu237.rom.Rom;
 
 public interface ApiInterface {
     /**
+     * Get the current library version string.
+     * @return version string "a.b.c.d"
+     */
+    public String GetVersion();
+
+    /**
      * initialize API
      * start internal worker thread.
      * @param app application context
@@ -148,6 +154,10 @@ public interface ApiInterface {
      * this function can use after ToolsMsrStartGetSetting() is Done.
      * @param handle lpu237 device handle
      * @return int[] the the first item is active interface, from the second item is valid interfaces.
+     * 0 -> usb keyboard interface.
+     * 1 -> usb hid vendor interface.
+     * 2 -> usb virtual COM interface.
+     * 10 -> real UART interface.
      */
     public int[] ToolsMsrGetActiveAndValiedInterface(UsbDevHandle handle);
 
@@ -287,6 +297,27 @@ public interface ApiInterface {
      */
     public Lpu237Tags ToolsMsrGetiButtonRemoveIndicationTag(UsbDevHandle handle);
 
+
+    /**
+     * Get the iButton remove-tag from loaded lpu237 system parameters.
+     * the pre/postfix tag of "iButton remove indication tag".
+     * @param handle lpu237 device handle
+     * @param b_prefix true -> the returned tag is prefix, false -> postfix.
+     * @return iButton tag object instance. null -> error
+     */
+    public Lpu237Tags ToolsMsrGetiButtonRTag(UsbDevHandle handle,boolean b_prefix);
+
+    /**
+     * Set the iButton remove-tag to lpu237 device.
+     * the pre/postfix tag of "iButton remove indication tag".
+     * the change will be applied after ToolsMsrStartSetSetting() and ToolsMsrStartApplySetting().
+     * @param handle lpu237 device handle
+     * @param b_prefix true -> the returned tag is prefix, false -> postfix.
+     * @param pTag iButton tag object instance
+     * @return true -> success, false -> fail
+     */
+    public boolean ToolsMsrSetiButtonRTag(UsbDevHandle handle,boolean b_prefix,Lpu237Tags pTag);
+
     /**
      * Set the iButton remove indication tag to lpu237 device.
      * the change will be applied after ToolsMsrStartSetSetting() and ToolsMsrStartApplySetting().
@@ -300,14 +331,14 @@ public interface ApiInterface {
     /**
      * Get the iButton start range offset from loaded lpu237 system parameters.
      * @param handle lpu237 device handle
-     * @return iButton start range offset, negative -> error
+     * @return iButton start range offset(0~15), negative -> error
      */
     public int ToolsMsrGetiButtonStartZeroBaseOffsetOfRange(UsbDevHandle handle);
 
     /**
      * Get the iButton end range offset from loaded lpu237 system parameters.
      * @param handle lpu237 device handle
-     * @return iButton end range offset, negative -> error
+     * @return iButton end range offset(0~15), negative -> error
      */
     public int ToolsMsrGetiButtonEndZeroBaseOffsetOfRange(UsbDevHandle handle);
 
@@ -315,8 +346,8 @@ public interface ApiInterface {
      * Set the iButton zero base range to lpu237 device.
      * the change will be applied after ToolsMsrStartSetSetting() and ToolsMsrStartApplySetting().
      * @param handle lpu237 device handle
-     * @param n_start the iButton start range offset.
-     * @param n_end the iButton end range offset.
+     * @param n_start the iButton start range offset.(0~15)
+     * @param n_end the iButton end range offset.(0~15), n_end can not be less then n_start.
      * @return true -> success, false -> fail
      */
     public boolean ToolsMsrSetiButtonZeroBaseRange(UsbDevHandle handle,int n_start,int n_end);

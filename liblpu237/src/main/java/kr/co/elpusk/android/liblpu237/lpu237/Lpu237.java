@@ -932,15 +932,19 @@ public class Lpu237 extends HidDevice
             if( b_error )
                 continue;
             //
-            if( packet == null )
+            if( packet == null ) {
                 packet = new InPacket(s_rx);
+
+                if( !packet.isPrefx())
+                    continue;
+                if( !packet.isSuccess())
+                    continue;
+            }
             else{
                 packet.set(s_rx);
+                if( !packet.isPrefx())
+                    continue;
             }
-            if( !packet.isPrefx())
-                continue;
-            if( !packet.isSuccess())
-                continue;
 
             b_result = true;
         }while(false);
@@ -958,6 +962,8 @@ public class Lpu237 extends HidDevice
             System.arraycopy(s_size,0,s_data, s_offset.length, s_size.length);
 
             if( !_df_io(Lpu237Request.cmdConfig, Lpu237RequestSub.subConfigGet,s_data,packet) )
+                continue;
+            if( !packet.isSuccess())
                 continue;
             b_result = true;
         }while(false);
@@ -981,6 +987,8 @@ public class Lpu237 extends HidDevice
                 System.arraycopy(s_data,0,s_data_field, s_offset.length+s_size.length,s_data.length);
             //
             if( !_df_io(Lpu237Request.cmdConfig,Lpu237RequestSub.subConfigSet,s_data_field,packet) )
+                continue;
+            if( !packet.isSuccess())
                 continue;
             b_result = true;
         }while(false);
@@ -1273,6 +1281,8 @@ public class Lpu237 extends HidDevice
             InPacket packet = new InPacket();
             if( !_df_io(Lpu237Request.cmdHwIsStandard,(byte)0,null,packet))
                 continue;
+            if( !packet.isSuccess())
+                continue;
             m_parameters.set_is_standard_type(packet.isPositive());
             b_result = true;
         }while(false);
@@ -1295,7 +1305,6 @@ public class Lpu237 extends HidDevice
                 m_parameters.set_decoder_mmd1000(false);
             else {
                 m_parameters.set_decoder_mmd1000(false);
-                continue;
             }
             //
             b_result = true;
@@ -1314,6 +1323,8 @@ public class Lpu237 extends HidDevice
             InPacket packet = new InPacket();
             if( !_df_io(Lpu237Request.cmdHwIsOnlyiButton,(byte)0,null,packet))
                 continue;
+            if( !packet.isSuccess())
+                continue;
             m_parameters.set_is_ibutton_only_type(packet.isPositive());
             b_result = true;
         }while(false);
@@ -1330,6 +1341,8 @@ public class Lpu237 extends HidDevice
         do{
             InPacket packet = new InPacket();
             if( !_df_io(Lpu237Request.cmdReadUID,(byte)0,null,packet))
+                continue;
+            if( !packet.isSuccess())
                 continue;
             m_parameters.set_uid( packet.s_data );
             b_result = true;

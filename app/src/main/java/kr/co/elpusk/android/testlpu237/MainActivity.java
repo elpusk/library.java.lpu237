@@ -1,5 +1,9 @@
 package kr.co.elpusk.android.testlpu237;
 
+import static android.content.ContentValues.TAG;
+
+import android.app.Activity;
+import android.app.Application;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,6 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -282,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
                 if(m_curHandle!= null ) {
                     m_b_canceled = true;
                     ApiLpu237.getInstance().CancelWait(m_curHandle);
-
                     ApiLpu237.getInstance().EnableMsr(m_curHandle,false);
                     ApiLpu237.getInstance().Close(m_curHandle);
                 }
@@ -332,6 +336,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void _mustBeCalledBeforeExit() {
+        m_b_canceled = true;
+
+        if(m_curHandle !=null && !m_curHandle.is_empty()){
+            ApiLpu237.getInstance().CancelWait(m_curHandle);
+            ApiLpu237.getInstance().EnableMsr(m_curHandle,false);
+            ApiLpu237.getInstance().Close(m_curHandle);
+            m_curHandle = null;
+        }
+        ApiLpu237.getInstance().Off();
     }
 
     private void startLongRunningTaskForOpen(String s_input) {
@@ -508,18 +524,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        _mustBeCalledBeforeExit();
         super.onDestroy();
-
-        if(m_curHandle !=null && !m_curHandle.is_empty()){
-            ApiLpu237.getInstance().CancelWait(m_curHandle);
-            ApiLpu237.getInstance().Close(m_curHandle);
-            m_curHandle = null;
-        }
-        ApiLpu237.getInstance().Off();
         unregisterReceiver(myReceiver);
         executorServiceDe.shutdown();
         executorServiceOpen.shutdown();
     }
+
     private String _getParsedInfo(){
         StringBuilder s_info = new StringBuilder();
 
