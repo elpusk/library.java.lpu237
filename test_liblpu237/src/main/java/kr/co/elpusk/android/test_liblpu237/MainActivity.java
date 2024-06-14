@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
@@ -46,50 +48,12 @@ public class MainActivity extends AppCompatActivity {
             //Don't use Main thread GUI Component here!
             //If use it, occur a dead-lock.!
             if(Result.RESULT_SUCCESS == read_result){
-                if( !Tools.array_has_triple_e6_in_header(rx) ){
-                    //PlainText here
-                    int[] nIso = new int[]{rx[0],rx[1],rx[2]};
-
-                    byte[] a1 = new byte[0];
-                    byte[] a2 = new byte[0];
-                    byte[] a3 = new byte[0];
-                    String s1 = "", s2="", s3="";
-
-                    int nOffset = 3;
-                    if( nIso[0] >0 ) {
-                        a1 = new byte[nIso[0]];
-                        System.arraycopy(rx,nOffset,a1,0,a1.length);
-                        for (int i = 0; i < a1.length; i++) {
-                            a1[i] += 0x20;
-                        }
-
-                        s1 = new String(a1, StandardCharsets.US_ASCII);
-                        nOffset += a1.length;
-                    }
-                    if( nIso[1] >0 ) {
-                        a2 = new byte[nIso[1]];
-                        System.arraycopy(rx,nOffset,a2,0,a2.length);
-                        for (int i = 0; i < a2.length; i++) {
-                            a2[i] += 0x30;
-                        }
-
-                        s2 = new String(a2, StandardCharsets.US_ASCII);
-                        nOffset += a2.length;
-                    }
-                    if( nIso[2] >0 ) {
-                        a3 = new byte[nIso[2]];
-                        System.arraycopy(rx,nOffset,a3,0,a3.length);
-                        for (int i = 0; i < a3.length; i++) {
-                            a3[i] += 0x30;
-                        }
-
-                        s3 = new String(a3, StandardCharsets.US_ASCII);
-                    }
-
+                ParserPlaintextRsp rsp = new ParserPlaintextRsp(rx);
+                if(rsp.IsSuccessParsing()){
                     String sInfo = "PlainText\n";
-                    sInfo = sInfo + "iso1:" + String.valueOf(nIso[0]) + ":" + s1 + "\n";
-                    sInfo = sInfo + "iso2:" + String.valueOf(nIso[1]) + ":" + s2 + "\n";
-                    sInfo = sInfo + "iso3:" + String.valueOf(nIso[2]) + ":" + s3 + "\n";
+                    for( int i=0; i<3; i++ ) {
+                        sInfo = sInfo + "iso"+(i+1)+":" + rsp.GetIsoAscii(i).length() + ":" + rsp.GetIsoAscii(i) + "\n";
+                    }
 
                     Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sInfo);
                 }
@@ -116,7 +80,39 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    Lpu237Callback m_cb_read = new CbMsrRead(Lpu237Callback.TypeRx.RX_MSR);
+    Lpu237Callback m_cb_read_msr = new CbMsrRead(Lpu237Callback.TypeRx.RX_MSR);
+
+    private class CbiButtonRead extends Lpu237Callback{
+        public CbiButtonRead(Lpu237Callback.TypeRx t){
+            super(t);
+        }
+        @Override
+        public void Run(Lpu237Callback.Result read_result,byte[] rx){
+            //Don't use Main thread GUI Component here!
+            //If use it, occur a dead-lock.!
+            if(Result.RESULT_SUCCESS == read_result){
+                String sHex = "";
+                if(rx != null) {
+                    sHex = Util.byteArrayToHex(rx);
+                }
+                Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sHex+"\n");
+            }
+            else if(Result.RESULT_ERROR == read_result){
+                Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "error : read\n");
+            }
+            else{
+                Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "cancel : read\n");
+            }
+
+            try {
+                blockingQ.put("");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+    Lpu237Callback m_cb_read_ibutton = new CbiButtonRead(Lpu237Callback.TypeRx.RX_IBUTTON);
 
     private ExecutorService m_executorService;
     private Handler m_mainHandler;
@@ -124,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     private UsbManager usbManager = null;
     private EditText consoleInput;
     private static final String PROMPT = "cmd> ";
+    private Button m_btGetSet, m_btReadMsr, m_btReadiButton, m_btReadAll, m_btClear;
 
     BlockingQueue<Object> blockingQ = new LinkedBlockingQueue<>();
     Queue<String> queue = new LinkedList<>();
@@ -163,10 +160,49 @@ public class MainActivity extends AppCompatActivity {
 
         usbManager = (UsbManager) getApplication().getSystemService(getApplication().USB_SERVICE);
 
+        m_btGetSet = findViewById(R.id.id_bt_get_set);
+        m_btGetSet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                _startMainTaskGetSet(getApplication());
+            }
+        });
+
+        m_btReadMsr = findViewById(R.id.id_bt_read_msr);
+        m_btReadMsr.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                _startMainTaskReadingMsr(getApplication());
+            }
+        });
+
+        m_btReadiButton = findViewById(R.id.id_bt_read_ibutton);
+        m_btReadiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                _startMainTaskReadingiButton(getApplication());
+            }
+        });
+
+        m_btReadAll = findViewById(R.id.id_bt_read_msr_ibutton);
+        m_btReadAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                _startMainTaskReadingAll(getApplication());
+            }
+        });
+
+        m_btClear = findViewById(R.id.id_bt_clear);
+        m_btClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                consoleInput.setText("");
+            }
+        });
+
+
         consoleInput = findViewById(R.id.id_main);
-
         consoleInput.setText(PROMPT);
-
         consoleInput.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
                 String sOrg = consoleInput.getText().toString();
@@ -188,8 +224,6 @@ public class MainActivity extends AppCompatActivity {
         //
         m_executorService = Executors.newSingleThreadExecutor();
         m_mainHandler = new Handler(Looper.getMainLooper());
-        //_startMainTaskGetSet(getApplication());
-        _startMainTaskReading(getApplication());
     }
 
     @Override
@@ -214,11 +248,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void _startMainTaskReading(Application input) {
+    private void _startMainTaskReadingMsr(Application input) {
         m_executorService.execute(new Runnable() {
             @Override
             public void run() {
-                final String result = _mainTaskReading(input);
+                final String result = _mainTaskReadingMsr(input);
+
+                m_mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        _putToStd(result);
+                    }
+                });
+            }
+        });
+    }
+    private void _startMainTaskReadingiButton(Application input) {
+        m_executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                final String result = _mainTaskReadingiButton(input);
+
+                m_mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        _putToStd(result);
+                    }
+                });
+            }
+        });
+    }
+    private void _startMainTaskReadingAll(Application input) {
+        m_executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                final String result = _mainTaskReadingAll(input);
 
                 m_mainHandler.post(new Runnable() {
                     @Override
@@ -816,7 +880,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @NonNull
-    private String _mainTaskReading(Application in){
+    private String _mainTaskReadingMsr(Application in){
         String sResult = "";
         boolean bResult = false;
         Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, "Starting test\n");
@@ -929,7 +993,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * 10 times Reading test.\n");
                 for( int i=0; i<10; i++ ) {
-                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read);
+                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_msr);
                     if (!bResult) {
                         sResult = "ER : WaitMsrOriButtonWithCallback.";
                         break;
@@ -963,6 +1027,288 @@ public class MainActivity extends AppCompatActivity {
         return sResult;
     }
 
+    private String _mainTaskReadingiButton(Application in){
+        String sResult = "";
+        boolean bResult = false;
+        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, "Starting test\n");
+        ApiInterface api = null;
+        Object obj = null;
+
+        boolean b_need_off = false;
+        boolean b_need_close = false;
+        UsbDevHandle hDev = null;
+
+        do{
+            try {
+                api = ApiFactory.getInstance(ApiFactory.VERSION.LAST);
+                if( api == null){
+                    sResult = "ER : create lpu237 api instance";
+                    continue;
+                }
+
+                ////////////////////////////////////////////////
+                // initialize api
+                if( !api.On(in) ){
+                    sResult = "ER : initialize lpu237 api instance";
+                    continue;
+                }
+                b_need_off = true;
+
+                ////////////////////////////////////////////////
+                // get api version
+                String sApiVersion = api.GetVersion();
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * API Version : "+sApiVersion+"\n");
+
+                ////////////////////////////////////////////////
+                // get lpu237 device list
+                ArrayList<UsbDevHandle> listDevPath= api.GetList();
+                if( listDevPath.isEmpty()){
+                    sResult = "ER : none lpu237 device";
+                    continue;
+                }
+
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * detected device : "+listDevPath.size()+"\n");
+                for( int i=0;i<listDevPath.size(); i++){
+                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " ** "+listDevPath.get(i).get_path()+"\n");
+                }//end for
+
+                ////////////////////////////////////////////////
+                ////////////////////////////////////////////////
+                //Very important code. before opening device, you must grant the permission
+                if(!usbManager.hasPermission(listDevPath.get(0).get_usbdevice())) {
+                    Util.sendRequstPermission(in, Const.LPU237_PERMISSION, listDevPath.get(0));
+                    obj = blockingQ.take();
+                    String sResultPermission = (String) obj;
+                    if (sResultPermission.compareTo("yes") != 0) {
+                        sResult = "ER : need device permission";
+                        continue;
+                    }
+                }
+
+                ////////////////////////////////////////////////
+                //open the first device for test
+                hDev = api.Open(listDevPath.get(0).get_path());
+                if(hDev.is_empty()){
+                    sResult = "ER : Open device";
+                    continue;
+                }
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * opened device : "+hDev.get_path()+"\n");
+                b_need_close = true;
+
+                ////////////////////////////////////////////////
+                //setup for reading
+                //you must change the current interface to usb vendor hid.
+                int[] inf = api.ToolsMsrGetActiveAndValiedInterface(hDev);
+                if(inf == null){
+                    sResult = "ER : ToolsMsrGetActiveAndValiedInterface : null.";
+                    continue;
+                }
+                if(inf.length<2){
+                    sResult = "ER : ToolsMsrGetActiveAndValiedInterface : null.";
+                    continue;
+                }
+                if(inf[0] == 1 ) {
+                    bResult = api.SetupForRead(hDev, false);//No need change interface.
+                }
+                else{
+                    bResult = api.SetupForRead(hDev, true);
+                }
+                if(!bResult){
+                    sResult = "ER : SetupForRead.";
+                    continue;
+                }
+
+                bResult = api.EnableiButton(hDev,true);
+                if(!bResult){
+                    sResult = "ER : EnableMsr : enable";
+                    continue;
+                }
+
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * 10 times Reading test.\n");
+                for( int i=0; i<10; i++ ) {
+                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_ibutton);
+                    if (!bResult) {
+                        sResult = "ER : WaitMsrOriButtonWithCallback with ibutton.";
+                        break;
+                    }
+                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " ** " +(i+1) +" times Reading : \n");
+                    obj = blockingQ.take();
+                    if(!((String)obj).isEmpty()){
+                        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, (String)obj);
+                    }
+                }//end for
+
+                bResult = api.EnableiButton(hDev,false);
+                if(!bResult){
+                    sResult = "ER : EnableiButton : disable.";
+                    continue;
+                }
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * TEST complete.\n");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }while(false);
+
+        if(b_need_close){
+            api.Close(hDev);
+        }
+        if(b_need_off){
+            api.Off();
+        }
+
+        return sResult;
+    }
+
+    private String _mainTaskReadingAll(Application in){
+        String sResult = "";
+        boolean bResult = false;
+        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, "Starting test\n");
+        ApiInterface api = null;
+        Object obj = null;
+
+        boolean b_need_off = false;
+        boolean b_need_close = false;
+        UsbDevHandle hDev = null;
+
+        do{
+            try {
+                api = ApiFactory.getInstance(ApiFactory.VERSION.LAST);
+                if( api == null){
+                    sResult = "ER : create lpu237 api instance";
+                    continue;
+                }
+
+                ////////////////////////////////////////////////
+                // initialize api
+                if( !api.On(in) ){
+                    sResult = "ER : initialize lpu237 api instance";
+                    continue;
+                }
+                b_need_off = true;
+
+                ////////////////////////////////////////////////
+                // get api version
+                String sApiVersion = api.GetVersion();
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * API Version : "+sApiVersion+"\n");
+
+                ////////////////////////////////////////////////
+                // get lpu237 device list
+                ArrayList<UsbDevHandle> listDevPath= api.GetList();
+                if( listDevPath.isEmpty()){
+                    sResult = "ER : none lpu237 device";
+                    continue;
+                }
+
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * detected device : "+listDevPath.size()+"\n");
+                for( int i=0;i<listDevPath.size(); i++){
+                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " ** "+listDevPath.get(i).get_path()+"\n");
+                }//end for
+
+                ////////////////////////////////////////////////
+                ////////////////////////////////////////////////
+                //Very important code. before opening device, you must grant the permission
+                if(!usbManager.hasPermission(listDevPath.get(0).get_usbdevice())) {
+                    Util.sendRequstPermission(in, Const.LPU237_PERMISSION, listDevPath.get(0));
+                    obj = blockingQ.take();
+                    String sResultPermission = (String) obj;
+                    if (sResultPermission.compareTo("yes") != 0) {
+                        sResult = "ER : need device permission";
+                        continue;
+                    }
+                }
+
+                ////////////////////////////////////////////////
+                //open the first device for test
+                hDev = api.Open(listDevPath.get(0).get_path());
+                if(hDev.is_empty()){
+                    sResult = "ER : Open device";
+                    continue;
+                }
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * opened device : "+hDev.get_path()+"\n");
+                b_need_close = true;
+
+                ////////////////////////////////////////////////
+                //setup for reading
+                //you must change the current interface to usb vendor hid.
+                int[] inf = api.ToolsMsrGetActiveAndValiedInterface(hDev);
+                if(inf == null){
+                    sResult = "ER : ToolsMsrGetActiveAndValiedInterface : null.";
+                    continue;
+                }
+                if(inf.length<2){
+                    sResult = "ER : ToolsMsrGetActiveAndValiedInterface : null.";
+                    continue;
+                }
+                if(inf[0] == 1 ) {
+                    bResult = api.SetupForRead(hDev, false);//No need change interface.
+                }
+                else{
+                    bResult = api.SetupForRead(hDev, true);
+                }
+                if(!bResult){
+                    sResult = "ER : SetupForRead.";
+                    continue;
+                }
+
+                bResult = api.EnableiButton(hDev,true);
+                if(!bResult){
+                    sResult = "ER : EnableiButton : enable";
+                    continue;
+                }
+                bResult = api.EnableMsr(hDev,true);
+                if(!bResult){
+                    sResult = "ER : EnableMsr : enable";
+                    continue;
+                }
+
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * 10 times Reading test.\n");
+                for( int i=0; i<10; i++ ) {
+                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_msr);
+                    if (!bResult) {
+                        sResult = "ER : WaitMsrOriButtonWithCallback with MSR.";
+                        break;
+                    }
+                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_ibutton);
+                    if (!bResult) {
+                        sResult = "ER : WaitMsrOriButtonWithCallback with ibutton.";
+                        break;
+                    }
+
+                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " ** " +(i+1) +" times Reading : \n");
+                    obj = blockingQ.take();
+                    if(!((String)obj).isEmpty()){
+                        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, (String)obj);
+                    }
+                }//end for
+
+                bResult = api.EnableMsr(hDev,false);
+                if(!bResult){
+                    sResult = "ER : EnableMsr : disable.";
+                    continue;
+                }
+                bResult = api.EnableiButton(hDev,false);
+                if(!bResult){
+                    sResult = "ER : EnableiButton : disable.";
+                    continue;
+                }
+
+                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * TEST complete.\n");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }while(false);
+
+        if(b_need_close){
+            api.Close(hDev);
+        }
+        if(b_need_off){
+            api.Off();
+        }
+
+        return sResult;
+    }
     /**
      * this function cannot be called directly another thread.
      * Instance of this, Use sendBroadercast(this, Const.STDOUT, Const.STR_KEY_STDOUT, your string data)

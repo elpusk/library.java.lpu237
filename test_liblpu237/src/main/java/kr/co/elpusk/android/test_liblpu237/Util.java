@@ -78,4 +78,40 @@ public class Util {
         }
 
     }
+
+    static public int compare_byte(int x, int y){
+        int n_x = 0xFF&x;
+        int n_y = 0xFF&y;
+        return Integer.compare(n_x,n_y);
+    }
+    static public boolean array_has_triple_e6_in_header(byte[] a){
+        boolean b_result = false;
+        do{
+            if(a == null){
+                continue;
+            }
+            if(a.length<3){
+                continue;
+            }
+            if(Util.compare_byte(0xe6,a[0])!=0){
+                continue;
+            }
+            if(Util.compare_byte(0xe6,a[1])!=0){
+                continue;
+            }
+            if(Util.compare_byte(0xe6,a[2])!=0){
+                continue;
+            }
+            b_result = true;
+        }while(false);
+        return b_result;
+    }
+
+    static public String byteArrayToHex(byte[] a) {
+        StringBuilder sb = new StringBuilder();
+        for(final byte b: a)
+            sb.append(String.format("%02x ", b&0xff));
+        return sb.toString();
+    }
+
 }

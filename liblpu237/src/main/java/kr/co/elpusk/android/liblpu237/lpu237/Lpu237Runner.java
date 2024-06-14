@@ -547,15 +547,23 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
             Lpu237Stepping getInfo,
             Lpu237Stepping setInfo
     ){
-        boolean b_ibutton_format = Lpu237Tools.is_hid_reponse_ibutton(rx);
+        boolean b_ibutton_format = false;
+        byte[] iKey = Lpu237Tools.get_hid_reponse_ibutton(rx);
         boolean b_msr = is_enable_read_msr();
-        boolean b_ibutton = is_enable_read_msr();
-        allCallBack.forEach(obj -> {
+        boolean b_ibutton = is_enable_read_ibutton();
+
+        if(iKey != null){
+            b_ibutton_format = true;
+        }
+
+        for (int i = 0; i < allCallBack.size(); i++) {
+            Object obj = allCallBack.get(i);
+            //
             if(obj instanceof Lpu237Callback) {
                 Lpu237Callback cb = (Lpu237Callback)obj;
                 if (b_ibutton_format) {
                     if (b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON) {
-                        cb.Run(read_result, rx);
+                        cb.Run(read_result, iKey);
                     }
                 } else if (b_msr && cb.GetType() == Lpu237Callback.TypeRx.RX_MSR) {
                     cb.Run(read_result, rx);
@@ -572,19 +580,24 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                     if(setInfo != null) {
                         cb_gs.Run(read_result,setInfo.GetCurDescription(),setInfo.GetCurStep(),setInfo.GetTotalStep());
                     }
-
                 }
             }
-        });
+        }//end for
     }
     private void _run_callback(Lpu237Callback cb,Lpu237Callback.Result read_result,byte[] rx){
 
-        boolean b_ibutton_format = Lpu237Tools.is_hid_reponse_ibutton(rx);
+        boolean b_ibutton_format = false;
+        byte[] iKey = Lpu237Tools.get_hid_reponse_ibutton(rx);
         boolean b_msr = is_enable_read_msr();
-        boolean b_ibutton = is_enable_read_msr();
+        boolean b_ibutton = is_enable_read_ibutton();
+
+        if(iKey != null){
+            b_ibutton_format = true;
+        }
+
         if(b_ibutton_format){
             if(b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON){
-                cb.Run(read_result, rx);
+                cb.Run(read_result, iKey);
             }
         }
         else if(b_msr && cb.GetType() == Lpu237Callback.TypeRx.RX_MSR){

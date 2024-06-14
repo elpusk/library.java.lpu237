@@ -844,31 +844,36 @@ public class Lpu237Tools {
     }
 
     /**
-     *
+     * get ibutton key from lpu237 response by HidRead()
      * @param s_rsp received data from lpu237 response by HidRead()
-     * @return true : response is i-button response
+     * @return byte[] : i-button key 8 byte. At removing, may be {0,0,0,0,0,0,0,0}
      */
-    static public boolean is_hid_reponse_ibutton(byte[] s_rsp){
-        boolean b_result = false;
+    static public byte[] get_hid_reponse_ibutton(byte[] s_rsp){
+        byte[] key = null;
 
         do{
             if(s_rsp == null){
                 continue;
             }
             //
-            if (s_rsp.length < Lpu237Const.SIZE_IBUTTON_DATA + Lpu237Const.IBUTTON_TAG_DATA.length){
+            if (s_rsp.length < (3+Lpu237Const.SIZE_IBUTTON_DATA + Lpu237Const.IBUTTON_TAG_DATA.length)){
                 continue;
             }
 
             byte[] ibuttontag = Arrays.copyOfRange(
                     s_rsp,
-                    Lpu237Const.SIZE_IBUTTON_DATA,
-                    Lpu237Const.SIZE_IBUTTON_DATA+Lpu237Const.IBUTTON_TAG_DATA.length-1
+                    3+Lpu237Const.SIZE_IBUTTON_DATA,
+                    3+Lpu237Const.SIZE_IBUTTON_DATA+Lpu237Const.IBUTTON_TAG_DATA.length
             );
-            b_result = Arrays.equals(ibuttontag,Lpu237Const.IBUTTON_TAG_DATA);
+            if( !Arrays.equals(ibuttontag,Lpu237Const.IBUTTON_TAG_DATA)){
+                continue;
+            }
+
+            key = new byte[Lpu237Const.SIZE_IBUTTON_DATA];
+            System.arraycopy( s_rsp,3, key,0,key.length);
 
         }while(false);
-        return b_result;
+        return key;
     }
     static private boolean _is_found_name_in_array(String[] n,String s_name){
         boolean b_found = false;
