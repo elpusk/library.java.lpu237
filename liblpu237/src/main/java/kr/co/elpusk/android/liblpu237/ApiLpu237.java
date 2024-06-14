@@ -49,7 +49,7 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "0.9.0.0";
+        return "1.0.0";
     }
     @Override
     public boolean On(Application app) {

@@ -2,21 +2,17 @@ package kr.co.elpusk.android.liblpu237;
 
 import android.app.Application;
 
-import java.io.File;
 import java.util.ArrayList;
 
-import kr.co.elpusk.android.liblpu237.hidboot.HidBootCallback;
 import kr.co.elpusk.android.liblpu237.lpu237.Lpu237Callback;
 import kr.co.elpusk.android.liblpu237.lpu237.Lpu237DoneCallback;
 import kr.co.elpusk.android.liblpu237.lpu237.Lpu237GetSetCallback;
-import kr.co.elpusk.android.liblpu237.lpu237.Lpu237Interface;
 import kr.co.elpusk.android.liblpu237.lpu237.Lpu237Tags;
-import kr.co.elpusk.android.liblpu237.rom.Rom;
 
 public interface ApiInterface {
     /**
      * Get the current library version string.
-     * @return version string "a.b.c.d"
+     * @return version string "a.b.c"
      */
     public String GetVersion();
 

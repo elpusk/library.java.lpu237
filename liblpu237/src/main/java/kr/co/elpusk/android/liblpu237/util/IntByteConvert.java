@@ -9,8 +9,6 @@ public class IntByteConvert {
 
         ByteBuffer buff = ByteBuffer.allocate(Integer.BYTES);
         buff.order(order);
-
-        // 인수로 넘어온 integer을 putInt로설정
         buff.putInt(integer);
         return buff.array();
     }
@@ -20,13 +18,10 @@ public class IntByteConvert {
         ByteBuffer buff = ByteBuffer.allocate(Integer.BYTES);
         buff.order(order);
 
-        // buff사이즈는 4인 상태임
-        // bytes를 put하면 position과 limit는 같은 위치가 됨.
         buff.put(bytes);
-        // flip()가 실행 되면 position은 0에 위치 하게 됨.
         buff.flip();
 
-        return buff.getInt(); // position위치(0)에서 부터 4바이트를 int로 변경하여 반환
+        return buff.getInt();
     }
 
     public static byte[] shortTobyte(short integer, ByteOrder order) {

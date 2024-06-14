@@ -8,14 +8,13 @@ android {
 
     defaultConfig {
         minSdk = 24
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -27,6 +26,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
+
+group = "kr.co.elpusk.android.liblpu237"
+version = "1.0.0"
 
 dependencies {
 

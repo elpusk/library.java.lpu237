@@ -132,10 +132,10 @@ public class Tools {
     }
 
     /**
-     * Queue<Byte>의 요소를 byte 배열로 변환하는 메서드
+     * Converts Queue<Byte> item to byte array.
      *
-     * @param queue Queue<Byte> 객체
-     * @return byte 배열
+     * @param queue Queue<Byte> object
+     * @return byte array
      */
     static public byte[] get_byte_array_from_queue(Queue<Byte> queue) {
         byte[] byteArray = new byte[0];
@@ -191,12 +191,7 @@ public class Tools {
         }while(false);
         return b_result;
     }
-    /**
-     * Hexadecimal 문자열을 받아 binary로 변환하여 byte 배열로 반환하는 메서드.
-     *
-     * @param s_hex 변환할 Hexadecimal 문자열
-     * @return 변환된 byte 배열
-     */
+
     static public byte[] get_binary_from_hex_string( String s_hex){
         int len = s_hex.length();
         byte[] data = new byte[len / 2];
@@ -246,7 +241,6 @@ public class Tools {
                 hexString.insert(0,String.format("%c%c", (char)bin_8bytes[i],(char)bin_8bytes[i+1]));
             }
 
-            // 헥스 문자열을 int로 변환
             n = Integer.parseUnsignedInt(hexString.toString(), 16);
         }while(false);
         return n;
@@ -273,7 +267,6 @@ public class Tools {
                 hexString.insert(0,String.format("%c%c", (char)bin_4bytes[i],(char)bin_4bytes[i+1]));
             }
 
-            // 헥스 문자열을 int로 변환
             n = Integer.parseUnsignedInt(hexString.toString(), 16);
         }while(false);
         return n;
