@@ -3,10 +3,16 @@ package kr.co.elpusk.android.liblpu237;
 import android.hardware.usb.UsbDevice;
 
 /**
- * usb device handle class of android system.
+ * usb device handle class of Our API
+ * this class contain device path and UsbDevice instance if android system.
  */
 public class UsbDevHandle {
 
+    /**
+     * Constructor with returning getDeviceList() of android UsbManager class.
+     * @param path the return getDeviceList() of android UsbManager class
+     * @param usbdevice UsbDevice class instance if android system.
+     */
     public UsbDevHandle(String path, UsbDevice usbdevice) {
         m_usbdevice = usbdevice;
         m_s_path = path;
@@ -24,7 +30,7 @@ public class UsbDevHandle {
     /**
      * Returns the UsbDevice object stored in this UsbDevHandle.
      *
-     * @return the UsbDevice object
+     * @return the android UsbDevice class object
      */    
     public UsbDevice get_usbdevice() {
         return m_usbdevice;
@@ -33,7 +39,9 @@ public class UsbDevHandle {
     /**
      * Checks if the USB device stored in the UsbDevHandle object is empty.
      *
-     * @return true if the USB device is null, false otherwise
+     * @return
+     * true if the USB device is null.( this handle isn't assigned by a usb device. you cannot use this handle )
+     * <br> false otherwise( OK use this handle )
      */    
     public boolean is_empty(){
         if(m_usbdevice == null)
@@ -45,9 +53,7 @@ public class UsbDevHandle {
     /**
      * Resets the UsbDevHandle object by setting the USB device to null and
      * clearing the path.
-     *
-     * @return none
-     */    
+     */
     public void reset() {
         m_usbdevice = null;
         m_s_path = "";

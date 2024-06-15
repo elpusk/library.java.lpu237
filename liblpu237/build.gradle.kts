@@ -38,3 +38,38 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
+
+tasks.register<Javadoc>("generateJavadoc") {
+    // 소스 파일 지정
+    source = files(
+            "src/main/java/kr/co/elpusk/android/liblpu237/ApiInterface.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/ApiFactory.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/UsbDevHandle.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237DoneCallback.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237GetSetCallback.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237Callback.java"
+    ).asFileTree
+
+    // classpath 설정
+    val androidJar = fileTree("${android.sdkDirectory}/platforms/${android.compileSdkVersion}/") {
+        include("android.jar")
+    }
+    val coreLambdaStubs = fileTree("${android.sdkDirectory}/build-tools/${android.buildToolsVersion}/") {
+        include("core-lambda-stubs.jar")
+    }
+    classpath = files(
+            android.bootClasspath + androidJar + coreLambdaStubs
+    )+files(android.sourceSets["main"].java.srcDirs+"kr/co/elpusk/android/liblpu237")
+
+    // Javadoc 옵션 설정
+    (options as StandardJavadocDocletOptions).apply {
+        encoding = "UTF-8"
+        charSet = "UTF-8"
+        docEncoding = "UTF-8"
+        locale = "ko_KR"
+        memberLevel = JavadocMemberLevel.PROTECTED
+        addStringOption("Xdoclint:none", "-quiet")
+        links("https://developer.android.com/reference/")
+    }
+
+}
