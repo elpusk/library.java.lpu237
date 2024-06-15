@@ -210,19 +210,24 @@ public abstract class HidDevice{
                     continue;
                 }
 
-                UsbRequest r = m_usbDeviceConnection.requestWait();
-                if( r == m_usbRequestIn ){
-                    //Log.i("read","ok.\n");
-                    int n_rx = m_buffer_in.position();
-                    m_buffer_in.position(0);
-                    if(n_rx<=0) {
-                        continue;
+                try {
+                    UsbRequest r = m_usbDeviceConnection.requestWait();
+                    if (r == m_usbRequestIn) {
+                        //Log.i("read","ok.\n");
+                        int n_rx = m_buffer_in.position();
+                        m_buffer_in.position(0);
+                        if (n_rx <= 0) {
+                            continue;
+                        }
+                        s_read = new byte[n_rx];
+                        m_buffer_in.get(s_read, 0, s_read.length);
+                    } else {
+                        Log.i("read", "error.\n");
                     }
-                    s_read = new byte[n_rx];
-                    m_buffer_in.get(s_read, 0, s_read.length);
                 }
-                else{
-                    Log.i("read","error.\n");
+                catch (Exception e){
+                    s_read = null;
+                    Log.i("read", "exception.\n");
                 }
             }
         }while(false);

@@ -50,7 +50,7 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
         Lpu237Getting GetInfo = new Lpu237Getting();
         Lpu237Setting SetInfo = new Lpu237Setting();
 
-        while(m_working.get()){
+        while (m_working.get()) {
 
             try {
                 _SetDoing(Do.NOTHING);
@@ -59,10 +59,37 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                 cb_done = null;
 
                 obj = m_queue.take();//cancelable
-                if(obj == null){
-                    continue;
+                if (obj == null) {
+                    if (m_working.get()) {
+                        if (cb != null) {
+                            _run_callback(cb, Lpu237Callback.Result.RESULT_CANCEL, new byte[0]);
+                        }
+                        if (cb_gs != null) {
+                            if (cb_gs.is_getting_type()) {
+                                _run_callback(cb_gs, Lpu237Callback.Result.RESULT_CANCEL, GetInfo);
+                            } else {
+                                _run_callback(cb_gs, Lpu237Callback.Result.RESULT_CANCEL, SetInfo);
+                            }
+                        }
+                        if (cb_done != null) {
+                            cb_done.Run(Lpu237Callback.Result.RESULT_CANCEL, "Apply");
+                        }
+                    } else {
+                        df_leave_opos();
+                        List<Object> allItems = new ArrayList<>();
+                        m_queue.drainTo(allItems);//cancel by kill. all cancel
+                        _run_callback(
+                                allItems,
+                                Lpu237Callback.Result.RESULT_CANCEL,
+                                new byte[0],
+                                GetInfo,
+                                SetInfo
+                        );
+                        _SetDoing(Do.NOTHING);
+                    }
+                    continue;//go to main while (m_working.get())
                 }
-                if(obj instanceof Lpu237Callback) {
+                if (obj instanceof Lpu237Callback) {
                     _SetDoing(Do.READING);
                     cb = (Lpu237Callback) obj;
 
@@ -70,7 +97,7 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                     SinglePacketBuilder single_packet = null;
 
                     do {
-                        Log.i("Lpu237","ready for reading\n");
+                        Log.i("Lpu237", "ready for reading\n");
                         //enabled read here.
                         byte[] s_rx = this.HidRead();//cancelable
                         //byte[] s_rx = new byte[]{0,0,0};
@@ -82,22 +109,21 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                             m_queue.drainTo(allItems);
                             allItems.add(0, obj);
                             //error
-                            _run_callback(allItems, Lpu237Callback.Result.RESULT_ERROR, new byte[0], null, null);
+                            _run_callback(allItems, Lpu237Callback.Result.RESULT_CANCEL, new byte[0], null, null);
                             continue;
                         }
 
-                        if(single_packet == null) {
+                        if (single_packet == null) {
                             single_packet = new SinglePacketBuilder(s_rx);
 
-                            if( single_packet.IsComplete() ){
+                            if (single_packet.IsComplete()) {
                                 List<Object> allItems = new ArrayList<>();
                                 m_queue.drainTo(allItems);
                                 allItems.add(0, obj);
-                                if(single_packet.IsError()) {
+                                if (single_packet.IsError()) {
                                     //may be plaintext.
                                     _run_callback(allItems, Lpu237Callback.Result.RESULT_SUCCESS, s_rx, null, null);
-                                }
-                                else{
+                                } else {
                                     //may encrypted data
                                     _run_callback(allItems, Lpu237Callback.Result.RESULT_SUCCESS, single_packet.GetSinglePacketBuilderWithTripleE6(), null, null);
                                 }
@@ -109,7 +135,7 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                         }
 
 
-                        if( single_packet.append(s_rx) ){
+                        if (single_packet.append(s_rx)) {
                             bMultiPacket = false;
 
                             List<Object> allItems = new ArrayList<>();
@@ -119,28 +145,27 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                             _run_callback(allItems, Lpu237Callback.Result.RESULT_SUCCESS, single_packet.GetSinglePacketBuilderWithTripleE6(), null, null);
                         }
                         //
-                    }while (bMultiPacket);
+                    } while (bMultiPacket);
                     continue;
                 }
 
-                if(obj instanceof Lpu237GetSetCallback) {
+                if (obj instanceof Lpu237GetSetCallback) {
                     cb_gs = (Lpu237GetSetCallback) obj;
-                    if(cb_gs.is_getting_type()){
+                    if (cb_gs.is_getting_type()) {
                         //getting system parameters
                         _SetDoing(Do.GETTING);
                         GetInfo.Reset();
                         do {
                             GetInfo = _run_getting(GetInfo);
-                            if(GetInfo.IsCurResultSuccess()){
-                                if( !_run_callback(cb_gs, Lpu237Callback.Result.RESULT_SUCCESS, GetInfo)){
+                            if (GetInfo.IsCurResultSuccess()) {
+                                if (!_run_callback(cb_gs, Lpu237Callback.Result.RESULT_SUCCESS, GetInfo)) {
                                     break;//exit while by user
                                 }
-                                GetInfo.SetCurStep(GetInfo.GetCurStep()+1);
-                            }
-                            else{
+                                GetInfo.SetCurStep(GetInfo.GetCurStep() + 1);
+                            } else {
                                 _run_callback(cb_gs, Lpu237Callback.Result.RESULT_ERROR, GetInfo);
                             }
-                        }while (!GetInfo.IsComplete());
+                        } while (!GetInfo.IsComplete());
                         continue;
                     }
                     //setting system parameters
@@ -148,29 +173,26 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                     SetInfo.Reset();
                     do {
                         SetInfo = _run_setting(SetInfo);
-                        if(SetInfo.IsCurResultSuccess()){
-                            if(!_run_callback(cb_gs, Lpu237Callback.Result.RESULT_SUCCESS, SetInfo)){
+                        if (SetInfo.IsCurResultSuccess()) {
+                            if (!_run_callback(cb_gs, Lpu237Callback.Result.RESULT_SUCCESS, SetInfo)) {
                                 break;//exit while by user
                             }
-                            SetInfo.SetCurStep(SetInfo.GetCurStep()+1);
-                        }
-                        else{
+                            SetInfo.SetCurStep(SetInfo.GetCurStep() + 1);
+                        } else {
                             _run_callback(cb_gs, Lpu237Callback.Result.RESULT_ERROR, SetInfo);
                         }
-                    }while (!SetInfo.IsComplete());
+                    } while (!SetInfo.IsComplete());
                 }
 
-                if( obj instanceof Lpu237DoneCallback){
+                if (obj instanceof Lpu237DoneCallback) {
                     cb_done = (Lpu237DoneCallback) obj;
-                    if(!this.df_enter_config()){
-                        cb_done.Run(Lpu237Callback.Result.RESULT_ERROR,"EnterConfig");
-                    }
-                    else {
+                    if (!this.df_enter_config()) {
+                        cb_done.Run(Lpu237Callback.Result.RESULT_ERROR, "EnterConfig");
+                    } else {
                         if (!this.df_apply()) {
                             this.df_leave_config();
                             cb_done.Run(Lpu237Callback.Result.RESULT_ERROR, "Apply");
-                        }
-                        else {
+                        } else {
                             this.df_leave_config();
                             cb_done.Run(Lpu237Callback.Result.RESULT_SUCCESS, "Apply");
                         }
@@ -179,24 +201,21 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
 
             } catch (InterruptedException e) {
                 //Thread.currentThread().interrupt();//cancel
-
-                if(m_working.get()){
-                    if(cb != null) {
-                        _run_callback(cb,Lpu237Callback.Result.RESULT_CANCEL,new byte[0]);
+                if (m_working.get()) {
+                    if (cb != null) {
+                        _run_callback(cb, Lpu237Callback.Result.RESULT_CANCEL, new byte[0]);
                     }
-                    if(cb_gs != null){
-                        if(cb_gs.is_getting_type()) {
+                    if (cb_gs != null) {
+                        if (cb_gs.is_getting_type()) {
                             _run_callback(cb_gs, Lpu237Callback.Result.RESULT_CANCEL, GetInfo);
-                        }
-                        else{
+                        } else {
                             _run_callback(cb_gs, Lpu237Callback.Result.RESULT_CANCEL, SetInfo);
                         }
                     }
-                    if(cb_done != null){
-                        cb_done.Run(Lpu237Callback.Result.RESULT_CANCEL,"Apply");
+                    if (cb_done != null) {
+                        cb_done.Run(Lpu237Callback.Result.RESULT_CANCEL, "Apply");
                     }
-                }
-                else{
+                } else {
                     df_leave_opos();
                     List<Object> allItems = new ArrayList<>();
                     m_queue.drainTo(allItems);//cancel by kill. all cancel
@@ -209,9 +228,8 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
                     );
                     _SetDoing(Do.NOTHING);
                 }
-            }
+            }//the end of catch
         }//
-
     }
 
     private Lpu237Getting _run_getting( Lpu237Getting Getting){
@@ -456,7 +474,8 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
     @Override
     public void close() throws Exception {
         m_working.set(false);//kill thread.
-        m_futureTask.cancel(true);
+        //m_futureTask.cancel(true);
+        m_queue.put(null);
         HidCancel();
     }
 
@@ -513,7 +532,14 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
     }
 
     public boolean Cancel(){
-        boolean b_result = m_futureTask.cancel(true);
+        boolean b_result = true;//m_futureTask.cancel(true);
+        try {
+            m_queue.put(null);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
         HidCancel();
         return b_result;
     }
@@ -561,12 +587,25 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
             //
             if(obj instanceof Lpu237Callback) {
                 Lpu237Callback cb = (Lpu237Callback)obj;
-                if (b_ibutton_format) {
-                    if (b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON) {
-                        cb.Run(read_result, iKey);
+
+                if (b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON) {
+                    if (b_ibutton_format) {
+                        cb.Run(read_result, iKey, Lpu237Callback.TypeRx.RX_IBUTTON);
                     }
-                } else if (b_msr && cb.GetType() == Lpu237Callback.TypeRx.RX_MSR) {
-                    cb.Run(read_result, rx);
+                    else{
+                        cb.Run(read_result,  new byte[0],Lpu237Callback.TypeRx.RX_RAW);
+                    }
+                }
+                else if (b_msr && cb.GetType() == Lpu237Callback.TypeRx.RX_MSR) {
+                    cb.Run(read_result, rx,Lpu237Callback.TypeRx.RX_MSR);
+                }
+                else if(cb.GetType() == Lpu237Callback.TypeRx.RX_MSR_IBUTTON){
+                    if(b_ibutton && b_ibutton_format ){
+                        cb.Run(read_result, iKey, Lpu237Callback.TypeRx.RX_IBUTTON);
+                    }
+                    else if(b_msr){
+                        cb.Run(read_result, rx,Lpu237Callback.TypeRx.RX_MSR);
+                    }
                 }
             }
             else if(obj instanceof Lpu237GetSetCallback) {
@@ -594,15 +633,26 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
         if(iKey != null){
             b_ibutton_format = true;
         }
-
-        if(b_ibutton_format){
-            if(b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON){
-                cb.Run(read_result, iKey);
+        if(b_ibutton && cb.GetType() == Lpu237Callback.TypeRx.RX_IBUTTON){
+            if(b_ibutton_format){
+                cb.Run(read_result, iKey,Lpu237Callback.TypeRx.RX_MSR_IBUTTON);
+            }
+            else{
+                cb.Run(read_result, new byte[0],Lpu237Callback.TypeRx.RX_RAW);
             }
         }
         else if(b_msr && cb.GetType() == Lpu237Callback.TypeRx.RX_MSR){
-            cb.Run(read_result, rx);
+            cb.Run(read_result, rx,Lpu237Callback.TypeRx.RX_MSR);
         }
+        else if(cb.GetType() == Lpu237Callback.TypeRx.RX_MSR_IBUTTON){
+            if(b_ibutton && b_ibutton_format ){
+                cb.Run(read_result, iKey, Lpu237Callback.TypeRx.RX_IBUTTON);
+            }
+            else if(b_msr){
+                cb.Run(read_result, rx,Lpu237Callback.TypeRx.RX_MSR);
+            }
+        }
+
     }
 
     private boolean _run_callback(Lpu237GetSetCallback cb,Lpu237Callback.Result result,Lpu237Stepping StepInfo){

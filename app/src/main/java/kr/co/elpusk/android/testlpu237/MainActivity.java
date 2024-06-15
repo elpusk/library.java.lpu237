@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
             super(t);
         }
         @Override
-        public void Run(Lpu237Callback.Result read_result,byte[] rx){
+        public void Run(Lpu237Callback.Result read_result,byte[] rx,Lpu237Callback.TypeRx t){
             //Don't use Main thread GUI Component here!
             //If use it, occur a dead-lock.!
             if(Result.RESULT_SUCCESS == read_result){

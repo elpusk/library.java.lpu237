@@ -44,10 +44,12 @@ public class MainActivity extends AppCompatActivity {
             super(t);
         }
         @Override
-        public void Run(Lpu237Callback.Result read_result,byte[] rx){
+        public void Run(Lpu237Callback.Result read_result,byte[] rx, Lpu237Callback.TypeRx t){
             //Don't use Main thread GUI Component here!
             //If use it, occur a dead-lock.!
+            String sResult = "";
             if(Result.RESULT_SUCCESS == read_result){
+                sResult = "success";
                 ParserPlaintextRsp rsp = new ParserPlaintextRsp(rx);
                 if(rsp.IsSuccessParsing()){
                     String sInfo = "PlainText\n";
@@ -66,14 +68,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             else if(Result.RESULT_ERROR == read_result){
+                sResult = "error";
                 Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "error : read");
             }
             else{
+                sResult = "cancel";
                 Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "cancel : read");
             }
 
             try {
-                blockingQ.put("");
+                blockingQ.put(sResult);
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -87,10 +91,12 @@ public class MainActivity extends AppCompatActivity {
             super(t);
         }
         @Override
-        public void Run(Lpu237Callback.Result read_result,byte[] rx){
+        public void Run(Lpu237Callback.Result read_result,byte[] rx, Lpu237Callback.TypeRx t){
             //Don't use Main thread GUI Component here!
             //If use it, occur a dead-lock.!
+            String sResult = "";
             if(Result.RESULT_SUCCESS == read_result){
+                sResult = "success";
                 String sHex = "";
                 if(rx != null) {
                     sHex = Util.byteArrayToHex(rx);
@@ -98,14 +104,16 @@ public class MainActivity extends AppCompatActivity {
                 Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sHex+"\n");
             }
             else if(Result.RESULT_ERROR == read_result){
+                sResult = "error";
                 Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "error : read\n");
             }
             else{
+                sResult = "cancel";
                 Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "cancel : read\n");
             }
 
             try {
-                blockingQ.put("");
+                blockingQ.put(sResult);
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -114,15 +122,70 @@ public class MainActivity extends AppCompatActivity {
     }
     Lpu237Callback m_cb_read_ibutton = new CbiButtonRead(Lpu237Callback.TypeRx.RX_IBUTTON);
 
+    private class CbMsriButtonRead extends Lpu237Callback{
+        public CbMsriButtonRead(Lpu237Callback.TypeRx t){
+            super(t);
+        }
+        @Override
+        public void Run(Lpu237Callback.Result read_result,byte[] rx, Lpu237Callback.TypeRx t){
+            //Don't use Main thread GUI Component here!
+            //If use it, occur a dead-lock.!
+            String sResult = "";
+            if(Result.RESULT_SUCCESS == read_result){
+                sResult = "success";
+                if( t == TypeRx.RX_MSR) {
+                    ParserPlaintextRsp rsp = new ParserPlaintextRsp(rx);
+                    if (rsp.IsSuccessParsing()) {
+                        String sInfo = "PlainText\n";
+                        for (int i = 0; i < 3; i++) {
+                            sInfo = sInfo + "iso" + (i + 1) + ":" + rsp.GetIsoAscii(i).length() + ":" + rsp.GetIsoAscii(i) + "\n";
+                        }
+
+                        Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sInfo);
+                    } else {//encrypted data.
+                        //remove triple 0xe6
+                        byte[] r = new byte[rx.length - 3];
+                        System.arraycopy(rx, 3, r, 0, r.length);
+                        String sHex = Tools.get_hex_string_from_binary(r);
+                        Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sHex);
+                    }
+                }
+                else if(t == TypeRx.RX_IBUTTON){
+                    String sHex = "";
+                    if(rx != null) {
+                        sHex = Util.byteArrayToHex(rx);
+                    }
+                    Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, sHex+"\n");
+                }
+            }
+            else if(Result.RESULT_ERROR == read_result){
+                sResult = "error";
+                Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "error : read");
+            }
+            else{
+                sResult = "cancel";
+                Util.sendBroadercast(getApplication(), Const.STDOUT, Const.STR_KEY_STDOUT, "cancel : read");
+            }
+
+            try {
+                blockingQ.put(sResult);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+    Lpu237Callback m_cb_read_msr_ibutton = new CbMsrRead(Lpu237Callback.TypeRx.RX_MSR_IBUTTON);
+
     private ExecutorService m_executorService;
     private Handler m_mainHandler;
 
     private UsbManager usbManager = null;
     private EditText consoleInput;
     private static final String PROMPT = "cmd> ";
-    private Button m_btGetSet, m_btReadMsr, m_btReadiButton, m_btReadAll, m_btClear;
+    private Button m_btGetSet, m_btReadMsr, m_btReadiButton, m_btReadAll, m_btReadCancel, m_btClear;
 
-    BlockingQueue<Object> blockingQ = new LinkedBlockingQueue<>();
+    BlockingQueue<Object> blockingQ = new LinkedBlockingQueue<>(50);
     Queue<String> queue = new LinkedList<>();
 
     private BroadcastReceiver m_Receiver = new BroadcastReceiver() {
@@ -191,6 +254,46 @@ public class MainActivity extends AppCompatActivity {
                 _startMainTaskReadingAll(getApplication());
             }
         });
+
+        m_btReadCancel = findViewById(R.id.id_bt_read_cancel);
+        m_btReadCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean bOpen = false;
+                do {
+                    ApiInterface api = ApiFactory.getInstance(ApiFactory.VERSION.LAST);
+                    if(api == null){
+                        continue;
+                    }
+
+                    if( !api.IsTurnOn() ){
+                        _putToStd("--ER--API is turn-off.\n");
+                    }
+                    ArrayList<UsbDevHandle> l = api.GetList();
+                    if(l.isEmpty()){
+                        continue;
+                    }
+                    if( l.get(0).is_empty() ){
+                        continue;
+                    }
+                    UsbDevHandle dev = l.get(0);
+                    if(!api.IsOpen(dev)){
+                        continue;
+                    }
+                    bOpen = true;
+
+                    if( !api.CancelWait(dev) ){
+                        _putToStd("--ER--CancelWait.\n");
+                        continue;
+                    }
+                    _putToStd("--OK--CancelWait.\n");
+                }while(false);
+                if( !bOpen ){
+                    _putToStd("--None cancel target.\n");
+                }
+            }
+        });
+
 
         m_btClear = findViewById(R.id.id_bt_clear);
         m_btClear.setOnClickListener(new View.OnClickListener() {
@@ -380,25 +483,25 @@ public class MainActivity extends AppCompatActivity {
                 ////////////////////////////////////////////////
                 //get system parameter from device.
                 if( !api.ToolsMsrStartGetSetting(hDev,new Lpu237GetSetCallbackLambda(true, (result, sDescription, nCurZeroBaseStep, nTotalStep) -> {
-                    try {
-                        if (result == Lpu237Callback.Result.RESULT_SUCCESS) {
-                            if ((nCurZeroBaseStep+1) == nTotalStep) {//complete
-                                blockingQ.put("success");
-                            } else {
-                                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * loading : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                            try {
+                                if (result == Lpu237Callback.Result.RESULT_SUCCESS) {
+                                    if ((nCurZeroBaseStep+1) == nTotalStep) {//complete
+                                        blockingQ.put("success");
+                                    } else {
+                                        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * loading : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                                    }
+                                } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
+                                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * error : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                                    blockingQ.put("error");
+                                } else {//may be cancel
+                                    blockingQ.put("cancel");
+                                }
                             }
-                        } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
-                            Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * error : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
-                            blockingQ.put("error");
-                        } else {//may be cancel
-                            blockingQ.put("cancel");
-                        }
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                    }
-                    return true; // 또는 적절한 반환값
-                    })
+                            catch (Exception e){
+                                e.printStackTrace();
+                            }
+                            return true; // 또는 적절한 반환값
+                        })
                 ) ){
                     sResult = "ER : Get system parameter : starting";
                     continue;
@@ -749,25 +852,25 @@ public class MainActivity extends AppCompatActivity {
                 ////////////////////////////////////////////////
                 // the changed system parameter of api memory transfer to device.
                 if( !api.ToolsMsrStartSetSetting(hDev,new Lpu237GetSetCallbackLambda(false, (result, sDescription, nCurZeroBaseStep, nTotalStep) -> {
-                    try {
-                        if (result == Lpu237Callback.Result.RESULT_SUCCESS) {
-                            if ((nCurZeroBaseStep+1) == nTotalStep) {//complete
-                                blockingQ.put("success");
-                            } else {
-                                Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * loading : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                            try {
+                                if (result == Lpu237Callback.Result.RESULT_SUCCESS) {
+                                    if ((nCurZeroBaseStep+1) == nTotalStep) {//complete
+                                        blockingQ.put("success");
+                                    } else {
+                                        Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * loading : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                                    }
+                                } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
+                                    Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * error : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
+                                    blockingQ.put("error");
+                                } else {//may be cancel
+                                    blockingQ.put("cancel");
+                                }
                             }
-                        } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
-                            Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * error : " + (nCurZeroBaseStep + 1) + "/" + nTotalStep + " : " + sDescription+"\n");
-                            blockingQ.put("error");
-                        } else {//may be cancel
-                            blockingQ.put("cancel");
-                        }
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                    }
-                    return true; // 또는 적절한 반환값
-                    })
+                            catch (Exception e){
+                                e.printStackTrace();
+                            }
+                            return true; // 또는 적절한 반환값
+                        })
                 ) ){
                     sResult = "ER : Set system parameter : starting";
                     continue;
@@ -831,20 +934,20 @@ public class MainActivity extends AppCompatActivity {
                     nRInf = 0;
                 }
                 bResult = api.ToolsMsrSetInterfaceToDeviceAndApply(hDev,nRInf,
-                new Lpu237DoneCallbackLambda((result, sDescription) -> {
-                    try {
-                        if (Lpu237Callback.Result.RESULT_SUCCESS == result) {
-                            blockingQ.put("success");
-                        } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
-                            blockingQ.put("error");
-                        } else {
-                            blockingQ.put("cancel");
-                        }
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                    }
-                })
+                        new Lpu237DoneCallbackLambda((result, sDescription) -> {
+                            try {
+                                if (Lpu237Callback.Result.RESULT_SUCCESS == result) {
+                                    blockingQ.put("success");
+                                } else if (result == Lpu237Callback.Result.RESULT_ERROR) {
+                                    blockingQ.put("error");
+                                } else {
+                                    blockingQ.put("cancel");
+                                }
+                            }
+                            catch (Exception e){
+                                e.printStackTrace();
+                            }
+                        })
                 );
                 if(!bResult){
                     sResult = "ER : ToolsMsrSetInterfaceToDeviceAndApply : starting";
@@ -890,20 +993,6 @@ public class MainActivity extends AppCompatActivity {
         boolean b_need_off = false;
         boolean b_need_close = false;
         UsbDevHandle hDev = null;
-
-        int nNewInf = 0;
-        int nNewBuzzer = 0;
-        int[] nNewIsoStatus = new int[]{0,0,0};
-        Lpu237Tags[] NewIsoTagPrivatePrefix = new Lpu237Tags[]{new Lpu237Tags(),new Lpu237Tags(),new Lpu237Tags()};
-        Lpu237Tags[] NewIsoTagPrivatePostfix = new Lpu237Tags[]{new Lpu237Tags(),new Lpu237Tags(),new Lpu237Tags()};
-        int nNewiButtonMode = 0;
-        Lpu237Tags NewiButtonTagPrefix = new Lpu237Tags();
-        Lpu237Tags NewiButtonTagPostfix = new Lpu237Tags();
-        Lpu237Tags NewiButtonTagRemove = new Lpu237Tags(Lpu237Tags.NUMBER_IBUTTON_REMOVE_TAG);
-        Lpu237Tags NewiButtonRTagPrefix = new Lpu237Tags();
-        Lpu237Tags NewiButtonRTagPostfix = new Lpu237Tags();
-        int nNewStart = 0;
-        int nNewEnd = 0;
 
         do{
             try {
@@ -1251,27 +1340,17 @@ public class MainActivity extends AppCompatActivity {
                     continue;
                 }
 
-                bResult = api.EnableiButton(hDev,true);
+                bResult = api.EnableAll(hDev,true);
                 if(!bResult){
-                    sResult = "ER : EnableiButton : enable";
-                    continue;
-                }
-                bResult = api.EnableMsr(hDev,true);
-                if(!bResult){
-                    sResult = "ER : EnableMsr : enable";
+                    sResult = "ER : EnableAll : enable";
                     continue;
                 }
 
                 Util.sendBroadercast(in, Const.STDOUT, Const.STR_KEY_STDOUT, " * 10 times Reading test.\n");
                 for( int i=0; i<10; i++ ) {
-                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_msr);
+                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_msr_ibutton);
                     if (!bResult) {
-                        sResult = "ER : WaitMsrOriButtonWithCallback with MSR.";
-                        break;
-                    }
-                    bResult = api.WaitMsrOriButtonWithCallback(hDev, m_cb_read_ibutton);
-                    if (!bResult) {
-                        sResult = "ER : WaitMsrOriButtonWithCallback with ibutton.";
+                        sResult = "ER : WaitMsrOriButtonWithCallback with MSR and ibutton.";
                         break;
                     }
 
@@ -1282,14 +1361,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }//end for
 
-                bResult = api.EnableMsr(hDev,false);
+                bResult = api.EnableAll(hDev,false);
                 if(!bResult){
-                    sResult = "ER : EnableMsr : disable.";
-                    continue;
-                }
-                bResult = api.EnableiButton(hDev,false);
-                if(!bResult){
-                    sResult = "ER : EnableiButton : disable.";
+                    sResult = "ER : EnableAll : disable.";
                     continue;
                 }
 

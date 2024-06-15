@@ -11,7 +11,8 @@ abstract public class Lpu237Callback {
     public enum TypeRx{
         RX_RAW,//unknown
         RX_MSR,//Magnetic card is reading.
-        RX_IBUTTON //iButton card is reading.
+        RX_IBUTTON, //iButton is reading.
+        RX_MSR_IBUTTON // Magnetic card and iButton reading
     }
 
     /**
@@ -28,7 +29,8 @@ abstract public class Lpu237Callback {
     /**
      * Constructor
      * @param t TypeRx.RX_MSR -> MSR reading type.<br>
-     *          TypeRx.RX_IBUTTON -> iButton reading type.
+     *          TypeRx.RX_IBUTTON -> iButton reading type.<br>
+     *          TypeeRx.RX_MSR_IBUTTON -> MSR and iButton reading type.
      */
     public Lpu237Callback(TypeRx t){
         m_type = t;
@@ -37,7 +39,8 @@ abstract public class Lpu237Callback {
     /**
      * get the type of this instance.
      * @return TypeRx.RX_MSR -> MSR reading type.<br>
-     * TypeRx.RX_IBUTTON -> iButton reading type.
+     * TypeRx.RX_IBUTTON -> iButton reading type.<br>
+     * TypeRx.RX_MSR_IBUTTON -> MSR and iButton reading type.
      */
     public TypeRx GetType(){
         return m_type;
@@ -57,6 +60,10 @@ abstract public class Lpu237Callback {
      *               Lpu237Callback.RESULT_SUCCESS, Lpu237Callback.RESULT_ERROR, or Lpu237Callback.RESULT_CANCEL. <br>
      *               It indicates the execution result of the reading.
      * @param rx byte[] type, the received data from lpu237.
+     * @param t Lpu237Callback.TypeRx represent the type of rx buffer.<br>
+     *          TypeRx.RX_IBUTTON <br>
+     *          TypeRx.RX_MSR<br>
+     *          another - ignore rx buffer. none data or error<br>
      */
-    abstract public void Run(Result read_result,byte[] rx);
+    abstract public void Run(Result read_result,byte[] rx, Lpu237Callback.TypeRx t);
 }

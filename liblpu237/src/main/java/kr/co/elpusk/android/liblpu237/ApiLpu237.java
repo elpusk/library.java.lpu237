@@ -49,17 +49,32 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "1.0.0";
+        return "1.1.0";
+    }
+
+    @Override
+    public boolean IsTurnOn(){
+        synchronized (m_lock_device_map) {
+            if( m_usbManager == null){
+                return false;
+            }
+            return true;
+        }
     }
     @Override
     public boolean On(Application app) {
         boolean b_result = false;
 
         do{
-            m_app = app;
-            //
-            m_usbManager = (UsbManager) m_app.getSystemService(m_app.USB_SERVICE);
-            m_map_usbDevice.clear();
+            if(app == null){
+                continue;
+            }
+            synchronized (m_lock_device_map) {
+                m_app = app;
+                //
+                m_usbManager = (UsbManager) m_app.getSystemService(m_app.USB_SERVICE);
+                m_map_usbDevice.clear();
+            }
             b_result = true;
         }while(false);
 
@@ -68,12 +83,14 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public void Off(){
-        m_map_usbDevice.clear();
-        m_map_lpu237.clear();
-        m_map_rom.clear();
+        synchronized (m_lock_device_map) {
+            m_map_usbDevice.clear();
+            m_map_lpu237.clear();
+            m_map_rom.clear();
 
-        m_usbManager = null;
-        m_app = null;
+            m_usbManager = null;
+            m_app = null;
+        }
     }
 
     @Override
@@ -84,6 +101,9 @@ public class ApiLpu237 implements ApiInterface {
         synchronized (m_lock_device_map){
             do{
                 m_map_usbDevice.clear();
+                if(m_usbManager == null){
+                    continue;
+                }
 
                 HashMap<String, UsbDevice> usbDevices  = m_usbManager.getDeviceList();
                 if(usbDevices == null){
@@ -116,6 +136,25 @@ public class ApiLpu237 implements ApiInterface {
         return list;
     }
 
+    @Override
+    public boolean IsOpen(UsbDevHandle handle){
+        boolean b_result = false;
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237 msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+                b_result = true;
+            }
+
+        }while(false);
+        return b_result;
+    }
     @Override
     public UsbDevHandle Open(String sPath){
         UsbDevHandle h = null;
@@ -340,6 +379,45 @@ public class ApiLpu237 implements ApiInterface {
     /**
      * Before executing, need open.
      * @param handle
+     * @param bEnable true-enable
+     * @return
+     */
+    @Override
+    public boolean EnableAll(UsbDevHandle handle,boolean bEnable){
+        boolean b_result = false;
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+                if(bEnable) {
+                    if (!msr.df_enter_opos()) {
+                        continue;
+                    }
+                }
+                else{
+                    if (!msr.df_leave_opos()) {
+                        continue;
+                    }
+                }
+                msr.set_read_msr(bEnable);
+                msr.set_read_ibutton(bEnable);
+                b_result = true;
+            }
+
+        }while(false);
+        return b_result;
+    }
+
+
+    /**
+     * Before executing, need open.
+     * @param handle
      * @return
      */
     public boolean CancelWait(UsbDevHandle handle){
@@ -360,12 +438,6 @@ public class ApiLpu237 implements ApiInterface {
                 }
 
                 b_result = msr.Cancel();
-            }
-
-            if(b_result){
-                if(msr != null) {
-                    while (msr.WhatIsDoing() != Lpu237Runner.Do.NOTHING) ;
-                }
             }
 
         }while(false);

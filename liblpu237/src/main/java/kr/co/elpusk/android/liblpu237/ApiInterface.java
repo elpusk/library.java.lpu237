@@ -24,6 +24,14 @@ public interface ApiInterface {
     public String GetVersion();
 
     /**
+     * Check whether or not API is initialized.
+     * @return
+     * true -> API is initialized.
+     * false -> API is not initialized. need On() execution.
+     */
+    public boolean IsTurnOn();
+
+    /**
      * initialize API.<br>
      * For using API, you must call this method.<br>
      * start internal worker thread.
@@ -48,6 +56,13 @@ public interface ApiInterface {
      * ArrayList<UsbDevHandle> these handle can be used for Open()
      */
     public ArrayList<UsbDevHandle> GetList();
+
+    /**
+     * check whether or not the handle is opened.
+     * @param handle the UsbDevHandle instance that is used in Open() method.
+     * @return true -> this handle is opened. false - not be opened.
+     */
+    public boolean IsOpen(UsbDevHandle handle);
 
     /**
      * open lpu237
@@ -103,6 +118,15 @@ public interface ApiInterface {
      * @return true -> success, false -> fail
      */
     public boolean EnableiButton(UsbDevHandle handle,boolean bEnable);
+
+    /**
+     * Enable/Disable execution of MSR and iButton reading callback when msr or iButton is ready.<br>
+     * Before executing, need open.
+     * @param handle the UsbDevHandle instance that is used in Open() method.
+     * @param bEnable true -> enable, false ->disable.
+     * @return true -> success, false -> fail
+     */
+    public boolean EnableAll(UsbDevHandle handle,boolean bEnable);
 
     /**
      * Cancel waiting for msr/iButton reading.<br>
