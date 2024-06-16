@@ -13,7 +13,7 @@
 
 ## Library Description
 + JavaDoc type
-+ [See](/javadoc/index.html)
++ [See](https://htmlpreview.github.io/?https://github.com/elpusk/library.java.lpu237/blob/main/javadoc/index.html)
 + Example source [here](https://github.com/elpusk/example.adr.lib)
 
 ## how to build.(AAR)
