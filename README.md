@@ -1,6 +1,6 @@
 # library.java.lpu237
 + Java library for lpu237 of Android.
-+ current version 1.2.0
++ current version 1.3.0
 + folders
   * liblpu237 - library module folder
   * test_liblpu237 - test app of library module folder 

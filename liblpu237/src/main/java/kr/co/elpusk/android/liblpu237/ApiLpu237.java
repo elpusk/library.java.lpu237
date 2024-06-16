@@ -49,7 +49,7 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "1.2.0";
+        return "1.3.0";
     }
 
     @Override
@@ -193,6 +193,9 @@ public class ApiLpu237 implements ApiInterface {
                     continue;
                 }
                 if( msr.df_enter_config() ){
+                    msr.df_get_name();
+                    msr.df_get_type();
+                    msr.df_get_ibutton_only_type();
                     msr.df_get_interface();
                     msr.df_leave_config();
                 }
@@ -240,6 +243,9 @@ public class ApiLpu237 implements ApiInterface {
                     continue;
                 }
                 if( !msr.df_get_type() ){
+                    continue;
+                }
+                if(!msr.df_get_ibutton_only_type()){
                     continue;
                 }
                 if( !msr.df_get_interface() ){
