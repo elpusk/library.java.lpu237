@@ -14,6 +14,7 @@
 ## Library Description
 + JavaDoc type
 + [See](/javadoc/index.html)
++ Example source [here](https://github.com/elpusk/example.adr.lib)
 
 ## how to build.(AAR)
 + In build variants, Set Active Build Variant to release
