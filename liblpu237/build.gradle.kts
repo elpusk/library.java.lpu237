@@ -28,7 +28,7 @@ android {
 }
 
 group = "kr.co.elpusk.android.liblpu237"
-version = "1.1.0"
+version = "1.2.0"
 
 dependencies {
 

@@ -49,7 +49,7 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "1.1.0";
+        return "1.2.0";
     }
 
     @Override
@@ -191,6 +191,10 @@ public class ApiLpu237 implements ApiInterface {
                 }
                 if(!msr.HidOpen()){
                     continue;
+                }
+                if( msr.df_enter_config() ){
+                    msr.df_get_interface();
+                    msr.df_leave_config();
                 }
 
                 h= new UsbDevHandle(sPath,dev);
