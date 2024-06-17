@@ -249,6 +249,9 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
         switch (Getting.GetCurStep()){
             case Lpu237Getting.Step.ENTER_CONFIG:
                 b_result = df_enter_config();
+                if(b_result){
+                    df_stop_ibutton();
+                }
                 break;
             case Lpu237Getting.Step.DECODER_MMD1100:
                 b_result = df_get_decoder_mmd1000();
@@ -381,6 +384,9 @@ public class Lpu237Runner extends Lpu237 implements Runnable, AutoCloseable {
         switch (Setting.GetCurStep()){
             case Lpu237Setting.Step.ENTER_CONFIG:
                 b_result = df_enter_config();
+                if(b_result){
+                    df_stop_ibutton();
+                }
                 break;
             case Lpu237Setting.Step.BLANKS:
                 b_result = df_set_blanks();

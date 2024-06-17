@@ -49,7 +49,7 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "1.4.0";
+        return "1.5.0";
     }
 
     @Override
@@ -193,6 +193,7 @@ public class ApiLpu237 implements ApiInterface {
                     continue;
                 }
                 if( msr.df_enter_config() ){
+                    msr.df_stop_ibutton();
                     msr.df_get_name();
                     msr.df_get_type();
                     msr.df_get_ibutton_only_type();

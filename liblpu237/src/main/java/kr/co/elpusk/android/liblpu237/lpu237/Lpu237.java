@@ -1061,6 +1061,8 @@ public class Lpu237 extends HidDevice
                 continue;
             b_leave_config = true;
 
+            df_stop_ibutton();
+
             df_get_decoder_mmd1000();
 
             if( !df_get_name() )
@@ -1904,6 +1906,8 @@ public class Lpu237 extends HidDevice
             if( !df_enter_config() )
                 continue;
             b_leave_config = true;
+
+            df_stop_ibutton();
 
             if( _is_changed( Lpu237ChangedParameter.BlankField)) {
                 if (!df_set_blanks())
