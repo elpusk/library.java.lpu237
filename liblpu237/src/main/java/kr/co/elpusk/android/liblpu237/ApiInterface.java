@@ -220,6 +220,20 @@ public interface ApiInterface {
     public boolean ToolsMsrSetInterfaceToDeviceAndApply(UsbDevHandle handle, int Inf, Lpu237DoneCallback cb);
 
     /**
+     * Get the name from loaded lpu237 system parameters.
+     * @param handle the UsbDevHandle instance that is used in Open() method.
+     * @return String type name
+     */
+    public String ToolsMsrGetName(UsbDevHandle handle);
+
+    /**
+     * Get the version from loaded lpu237 system parameters.
+     * @param handle the UsbDevHandle instance that is used in Open() method.
+     * @return String type version ex) "1.0.0.1"
+     */
+    public String ToolsMsrGetVersion(UsbDevHandle handle);
+
+    /**
      * Get the buzzer status from loaded lpu237 system parameters.
      * @param handle the UsbDevHandle instance that is used in Open() method.
      * @return 1 -> on, 0 -> off,<br> negative -> error

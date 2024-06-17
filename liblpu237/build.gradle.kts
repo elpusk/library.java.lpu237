@@ -28,7 +28,7 @@ android {
 }
 
 group = "kr.co.elpusk.android.liblpu237"
-version = "1.3.0"
+version = "1.4.0"
 
 dependencies {
 
@@ -47,7 +47,8 @@ tasks.register<Javadoc>("generateJavadoc") {
             "src/main/java/kr/co/elpusk/android/liblpu237/UsbDevHandle.java",
             "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237DoneCallback.java",
             "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237GetSetCallback.java",
-            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237Callback.java"
+            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237Callback.java",
+            "src/main/java/kr/co/elpusk/android/liblpu237/lpu237/Lpu237Tags.java"
     ).asFileTree
 
     // classpath 설정

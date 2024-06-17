@@ -16,6 +16,9 @@ public interface Lpu237Request {
     byte cmdHwIsOnlyiButton = 'W';
     byte cmdReadUID = 'U';
     byte cmdHwIsMMD1000 = 'N';
+
+    byte cmdStartIButton = 'F';
+    byte cmdStopIButton = 'H';
     byte cmdDebInterface = 'Z';//debugging
     byte cmdRawMMD1000 = 'E';//Raw command for MMD1000
     byte cmdUartBypass = 'T';//bypass data to UART. supported in version 10.0 greater then equal

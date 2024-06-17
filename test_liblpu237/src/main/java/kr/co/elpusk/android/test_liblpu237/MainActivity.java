@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    Lpu237Callback m_cb_read_msr_ibutton = new CbMsrRead(Lpu237Callback.TypeRx.RX_MSR_IBUTTON);
+    Lpu237Callback m_cb_read_msr_ibutton = new CbMsriButtonRead(Lpu237Callback.TypeRx.RX_MSR_IBUTTON);
 
     private ExecutorService m_executorService;
     private Handler m_mainHandler;

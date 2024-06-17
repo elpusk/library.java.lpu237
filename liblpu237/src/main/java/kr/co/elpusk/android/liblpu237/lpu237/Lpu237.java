@@ -1234,6 +1234,35 @@ public class Lpu237 extends HidDevice
         return b_result;
     }
 
+    public boolean df_start_ibutton()
+    {
+        boolean b_result = false;
+
+        do{
+            if( !_df_io(Lpu237Request.cmdStartIButton,(byte)0,null,null))
+                continue;
+            b_result = true;
+        }while(false);
+        if( !b_result )
+            Log.i("Lpu237","error : df_start_ibutton");
+
+        return b_result;
+    }
+    public boolean df_stop_ibutton()
+    {
+        boolean b_result = false;
+
+        do{
+            if( !_df_io(Lpu237Request.cmdStopIButton,(byte)0,null,null))
+                continue;
+            b_result = true;
+        }while(false);
+        if( !b_result )
+            Log.i("Lpu237","error : df_stop_ibutton");
+
+        return b_result;
+    }
+
     protected boolean df_get_blanks(){
         boolean b_result = false;
 

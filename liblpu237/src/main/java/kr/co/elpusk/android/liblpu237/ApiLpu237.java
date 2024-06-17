@@ -49,7 +49,7 @@ public class ApiLpu237 implements ApiInterface {
 
     @Override
     public String GetVersion(){
-        return "1.3.0";
+        return "1.4.0";
     }
 
     @Override
@@ -378,6 +378,12 @@ public class ApiLpu237 implements ApiInterface {
                 if(!msr.is_open()){
                     continue;
                 }
+                if(bEnable) {
+                    msr.df_start_ibutton();
+                }
+                else{
+                    msr.df_stop_ibutton();
+                }
                 msr.set_read_ibutton(bEnable);
                 b_result = true;
             }
@@ -409,11 +415,13 @@ public class ApiLpu237 implements ApiInterface {
                     if (!msr.df_enter_opos()) {
                         continue;
                     }
+                    msr.df_start_ibutton();
                 }
                 else{
                     if (!msr.df_leave_opos()) {
                         continue;
                     }
+                    msr.df_stop_ibutton();
                 }
                 msr.set_read_msr(bEnable);
                 msr.set_read_ibutton(bEnable);
@@ -647,6 +655,51 @@ public class ApiLpu237 implements ApiInterface {
             }
         }while(false);
         return b_result;
+    }
+
+    @Override
+    public String ToolsMsrGetName(UsbDevHandle handle){
+        String sN = "";
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+
+                sN = msr.getName();
+            }
+        }while(false);
+        return sN;
+    }
+
+    @Override
+    /**
+     * Get the version from loaded lpu237 system parameters.
+     * @param handle the UsbDevHandle instance that is used in Open() method.
+     * @return String type name
+     */
+    public String ToolsMsrGetVersion(UsbDevHandle handle){
+        String s = "";
+
+        do{
+            synchronized (m_lock_device_map){
+                if(!is_valied(handle)){
+                    continue;
+                }
+                Lpu237Runner msr = m_map_lpu237.get(handle.get_path());
+                if(!msr.is_open()){
+                    continue;
+                }
+
+                s = msr.getVersionSystem();
+            }
+        }while(false);
+        return s;
     }
 
     @Override
