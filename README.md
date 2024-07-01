@@ -5,6 +5,10 @@
   * liblpu237 - library module folder
   * test_liblpu237 - test app of library module folder 
   * app - Don't use it. Only for developer.
++ firmware condition
+  * callisto version 3.24(lpu23x_00034.rom) or higher. [See](https://github.com/elpusk/public.lpu237.firmware/tree/main/lpu23x)
+  * ganymede version 5.23(lpu23x_00034.rom) or higher. [See](https://github.com/elpusk/public.lpu237.firmware/tree/main/lpu23x)
+  * himalia version 2.4(lpu23x_00034.rom) or higher. [See](https://github.com/elpusk/public.lpu237.firmware/tree/main/lpu23x)
 
 ## [liblpu237](liblpu237) 
   + This is the library module folder.
